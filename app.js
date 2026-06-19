@@ -1,169 +1,221 @@
+const N = 100000;
+const coverageValues = Array.from({ length: 101 }, (_, i) => i);
+
 const els = {
   coverage: document.getElementById('coverage'),
+  years: document.getElementById('years'),
   infectionRate: document.getElementById('infectionRate'),
   meningitisRate: document.getElementById('meningitisRate'),
   vaccineMeningitis: document.getElementById('vaccineMeningitis'),
   ve: document.getElementById('ve'),
-  r0: document.getElementById('r0')
-};
-const vals = {
+  waning: document.getElementById('waning'),
+  r0: document.getElementById('r0'),
   coverageVal: document.getElementById('coverageVal'),
+  yearsVal: document.getElementById('yearsVal'),
+  horizonText: document.getElementById('horizonText'),
   infectionRateVal: document.getElementById('infectionRateVal'),
   meningitisRateVal: document.getElementById('meningitisRateVal'),
   vaccineMeningitisVal: document.getElementById('vaccineMeningitisVal'),
   veVal: document.getElementById('veVal'),
+  waningVal: document.getElementById('waningVal'),
   r0Val: document.getElementById('r0Val'),
   infMen: document.getElementById('infMen'),
   vacMen: document.getElementById('vacMen'),
   totMen: document.getElementById('totMen'),
   diffMen: document.getElementById('diffMen'),
+  cumInf: document.getElementById('cumInf'),
   interpretation: document.getElementById('interpretation')
 };
 
-function residualTransmissionFraction(c, ve, r0) {
-  const susceptible = 1 - c * ve;
-  const re = r0 * susceptible;
+const presets = {
+  low: { infectionRate: 2000, meningitisRate: 5, vaccineMeningitis: 5, ve: 0.86, waning: 1.6, r0: 5.0 },
+  mid: { infectionRate: 3500, meningitisRate: 7.5, vaccineMeningitis: 27.5, ve: 0.86, waning: 1.6, r0: 5.0 },
+  high: { infectionRate: 5000, meningitisRate: 10, vaccineMeningitis: 50, ve: 0.72, waning: 3.9, r0: 5.0 }
+};
+
+function params() {
+  return {
+    coverage: Number(els.coverage.value) / 100,
+    years: Number(els.years.value),
+    infectionRate: Number(els.infectionRate.value),
+    meningitisRate: Number(els.meningitisRate.value) / 1000,
+    vaccineMeningitis: Number(els.vaccineMeningitis.value),
+    ve: Number(els.ve.value),
+    waning: Number(els.waning.value) / 100,
+    r0: Number(els.r0.value)
+  };
+}
+
+function residualTransmissionFraction(coverage, effectiveVe, r0) {
+  const susceptibleFraction = Math.max(0, 1 - coverage * effectiveVe);
+  const re = r0 * susceptibleFraction;
   let frac;
   if (re > 1) {
     frac = (re - 1) / (r0 - 1);
   } else {
-    frac = 0.02 * Math.max(re, 0);
+    // Small residual sporadic risk below the epidemic threshold.
+    frac = 0.02 * re;
   }
-  return Math.min(Math.max(frac, 0), 1);
+  return Math.max(0, Math.min(1, frac));
 }
 
-function calcAtCoverage(cPct) {
-  const c = cPct / 100;
-  const infectionRate = Number(els.infectionRate.value);
-  const meningitisRate = Number(els.meningitisRate.value) / 1000;
-  const vaccineMeningitis = Number(els.vaccineMeningitis.value);
-  const ve = Number(els.ve.value);
-  const r0 = Number(els.r0.value);
+function simulateCohort(coverage, p) {
+  let susceptibleUnvaccinated = N * (1 - coverage);
+  let susceptibleVaccinated = N * coverage;
+  let cumulativeInfections = 0;
+  let infectionMeningitis = 0;
 
-  const residual = residualTransmissionFraction(c, ve, r0);
-  const infections = infectionRate * residual;
-  const infectionMeningitis = infections * meningitisRate;
-  const vaccineMeningitisCases = c * vaccineMeningitis;
-  const total = infectionMeningitis + vaccineMeningitisCases;
-  return { infectionMeningitis, vaccineMeningitisCases, total };
-}
+  const vaccineMeningitis = coverage * p.vaccineMeningitis;
 
-function buildData() {
-  const labels = [];
-  const infection = [];
-  const vaccine = [];
-  const total = [];
-  const selectedLine = [];
-  const selected = Number(els.coverage.value);
-  for (let c = 0; c <= 100; c += 1) {
-    const y = calcAtCoverage(c);
-    labels.push(c);
-    infection.push(y.infectionMeningitis);
-    vaccine.push(y.vaccineMeningitisCases);
-    total.push(y.total);
-    selectedLine.push(c === selected ? y.total : null);
+  for (let year = 0; year < p.years; year++) {
+    const veYear = Math.max(0, p.ve * Math.pow(1 - p.waning, year));
+    const transmission = residualTransmissionFraction(coverage, veYear, p.r0);
+    const baselineAnnualRisk = p.infectionRate / 100000;
+    const forceOfInfection = Math.min(1, baselineAnnualRisk * transmission);
+
+    const infectionsUnvaccinated = Math.min(susceptibleUnvaccinated, susceptibleUnvaccinated * forceOfInfection);
+    const infectionsVaccinated = Math.min(susceptibleVaccinated, susceptibleVaccinated * forceOfInfection * (1 - veYear));
+    const infections = infectionsUnvaccinated + infectionsVaccinated;
+
+    cumulativeInfections += infections;
+    infectionMeningitis += infections * p.meningitisRate;
+
+    susceptibleUnvaccinated -= infectionsUnvaccinated;
+    susceptibleVaccinated -= infectionsVaccinated;
   }
-  return { labels, infection, vaccine, total, selectedLine };
+
+  return {
+    cumulativeInfections,
+    infectionMeningitis,
+    vaccineMeningitis,
+    totalMeningitis: infectionMeningitis + vaccineMeningitis
+  };
 }
 
-const selectedCoveragePlugin = {
-  id: 'selectedCoveragePlugin',
+const verticalLinePlugin = {
+  id: 'verticalCoverageLine',
   afterDatasetsDraw(chart) {
-    const selected = Number(els.coverage.value);
+    const p = params();
     const xScale = chart.scales.x;
     const yScale = chart.scales.y;
-    const x = xScale.getPixelForValue(selected);
+    const x = xScale.getPixelForValue(Math.round(p.coverage * 100));
     const ctx = chart.ctx;
     ctx.save();
-    ctx.setLineDash([6, 5]);
-    ctx.strokeStyle = '#6b7280';
-    ctx.lineWidth = 1.3;
     ctx.beginPath();
     ctx.moveTo(x, yScale.top);
     ctx.lineTo(x, yScale.bottom);
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = '#333333';
     ctx.stroke();
     ctx.restore();
   }
 };
 
 const ctx = document.getElementById('mainChart');
-let data = buildData();
 const chart = new Chart(ctx, {
   type: 'line',
   data: {
-    labels: data.labels,
+    labels: coverageValues,
     datasets: [
-      { label: '自然感染由来', data: data.infection, borderWidth: 2, pointRadius: 0, tension: 0.2 },
-      { label: 'ワクチン由来', data: data.vaccine, borderWidth: 2, pointRadius: 0, tension: 0.2 },
-      { label: '合計', data: data.total, borderWidth: 3, pointRadius: 0, tension: 0.2 }
+      { label: '自然感染由来', data: [], tension: 0.25, pointRadius: 0, borderWidth: 2 },
+      { label: 'ワクチン由来', data: [], tension: 0.25, pointRadius: 0, borderWidth: 2 },
+      { label: '合計', data: [], tension: 0.25, pointRadius: 0, borderWidth: 3 }
     ]
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
-    scales: {
-      x: { title: { display: true, text: '接種率 (%)' }, min: 0, max: 100 },
-      y: { title: { display: true, text: '無菌性髄膜炎 /10万人年' }, beginAtZero: true }
-    },
     plugins: {
-      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} /10万人年` } },
-      legend: { position: 'bottom' }
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          title: (items) => `接種率 ${items[0].label}%`,
+          label: (item) => `${item.dataset.label}: ${item.parsed.y.toFixed(1)} /10万人コホート`
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: '接種率 (%)' }, ticks: { callback: (v) => `${v}%` } },
+      y: { title: { display: true, text: '累積無菌性髄膜炎 /10万人コホート' }, beginAtZero: true }
     }
   },
-  plugins: [selectedCoveragePlugin]
+  plugins: [verticalLinePlugin]
 });
 
-function updateLabelsAndSummary() {
-  vals.coverageVal.textContent = els.coverage.value;
-  vals.infectionRateVal.textContent = Number(els.infectionRate.value).toLocaleString();
-  vals.meningitisRateVal.textContent = els.meningitisRate.value;
-  vals.vaccineMeningitisVal.textContent = els.vaccineMeningitis.value;
-  vals.veVal.textContent = Math.round(Number(els.ve.value) * 100);
-  vals.r0Val.textContent = Number(els.r0.value).toFixed(1);
+function format1(x) { return Number(x).toFixed(1); }
+function format0(x) { return Math.round(Number(x)).toLocaleString('ja-JP'); }
 
-  const selected = calcAtCoverage(Number(els.coverage.value));
-  const baseline = calcAtCoverage(0);
-  const diff = selected.total - baseline.total;
-  vals.infMen.textContent = `${selected.infectionMeningitis.toFixed(2)}`;
-  vals.vacMen.textContent = `${selected.vaccineMeningitisCases.toFixed(2)}`;
-  vals.totMen.textContent = `${selected.total.toFixed(2)}`;
-  vals.diffMen.textContent = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}`;
-
-  let msg = '接種なしと比較して、総無菌性髄膜炎はほぼ同等です。';
-  if (diff <= -2) msg = '接種なしと比較して、総無菌性髄膜炎は減少します。';
-  if (diff >= 2) msg = '接種なしと比較して、総無菌性髄膜炎は増加します。';
-  vals.interpretation.textContent = msg;
+function updateText(p) {
+  els.coverageVal.textContent = Math.round(p.coverage * 100);
+  els.yearsVal.textContent = p.years;
+  els.horizonText.textContent = p.years;
+  els.infectionRateVal.textContent = p.infectionRate;
+  els.meningitisRateVal.textContent = (p.meningitisRate * 1000).toFixed(1).replace('.0', '');
+  els.vaccineMeningitisVal.textContent = p.vaccineMeningitis.toFixed(1).replace('.0', '');
+  els.veVal.textContent = Math.round(p.ve * 100);
+  els.waningVal.textContent = (p.waning * 100).toFixed(1).replace('.0', '');
+  els.r0Val.textContent = p.r0.toFixed(1);
 }
 
 function update() {
-  const d = buildData();
-  chart.data.labels = d.labels;
-  chart.data.datasets[0].data = d.infection;
-  chart.data.datasets[1].data = d.vaccine;
-  chart.data.datasets[2].data = d.total;
-  chart.update();
-  updateLabelsAndSummary();
-}
+  const p = params();
+  updateText(p);
 
-function setPreset(name) {
-  if (name === 'low') {
-    els.infectionRate.value = 2000;
-    els.meningitisRate.value = 5;
-    els.vaccineMeningitis.value = 5;
-  } else if (name === 'mid') {
-    els.infectionRate.value = 3500;
-    els.meningitisRate.value = 7.5;
-    els.vaccineMeningitis.value = 27.5;
-  } else if (name === 'high') {
-    els.infectionRate.value = 5000;
-    els.meningitisRate.value = 10;
-    els.vaccineMeningitis.value = 50;
+  const infectionData = [];
+  const vaccineData = [];
+  const totalData = [];
+
+  for (const cPct of coverageValues) {
+    const result = simulateCohort(cPct / 100, p);
+    infectionData.push(result.infectionMeningitis);
+    vaccineData.push(result.vaccineMeningitis);
+    totalData.push(result.totalMeningitis);
   }
-  document.querySelectorAll('.preset-row button').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
-  update();
+
+  chart.data.datasets[0].data = infectionData;
+  chart.data.datasets[1].data = vaccineData;
+  chart.data.datasets[2].data = totalData;
+  chart.update();
+
+  const current = simulateCohort(p.coverage, p);
+  const baseline = simulateCohort(0, p);
+  const diff = current.totalMeningitis - baseline.totalMeningitis;
+
+  els.infMen.textContent = `${format1(current.infectionMeningitis)}例`;
+  els.vacMen.textContent = `${format1(current.vaccineMeningitis)}例`;
+  els.totMen.textContent = `${format1(current.totalMeningitis)}例`;
+  els.diffMen.textContent = `${diff >= 0 ? '+' : ''}${format1(diff)}例`;
+  els.cumInf.textContent = `${format0(current.cumulativeInfections)}人`;
+
+  if (diff < -5) {
+    els.interpretation.textContent = `現在の設定では、接種によりX年間累積の無菌性髄膜炎は接種なしより少なく推定されます。`;
+  } else if (diff > 5) {
+    els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、接種なしより多く推定されます。ワクチン関連髄膜炎率などの仮定に敏感です。`;
+  } else {
+    els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、接種なしとの差は小さく推定されます。`;
+  }
 }
 
-Object.values(els).forEach(el => el.addEventListener('input', update));
-document.querySelectorAll('.preset-row button').forEach(btn => btn.addEventListener('click', () => setPreset(btn.dataset.preset)));
+for (const el of [els.coverage, els.years, els.infectionRate, els.meningitisRate, els.vaccineMeningitis, els.ve, els.waning, els.r0]) {
+  el.addEventListener('input', update);
+  el.addEventListener('change', update);
+}
+
+document.querySelectorAll('[data-preset]').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('active'));
+    button.classList.add('active');
+    const p = presets[button.dataset.preset];
+    els.infectionRate.value = p.infectionRate;
+    els.meningitisRate.value = p.meningitisRate;
+    els.vaccineMeningitis.value = p.vaccineMeningitis;
+    els.ve.value = String(p.ve);
+    els.waning.value = p.waning;
+    els.r0.value = p.r0;
+    update();
+  });
+});
+
 update();

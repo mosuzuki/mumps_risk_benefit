@@ -1,22 +1,28 @@
 # Mumps vaccine risk-benefit dashboard
 
-Static GitHub Pages dashboard for a simple mumps vaccine risk-benefit model. This version is explicitly defined as an annual incidence model.
+Static GitHub Pages dashboard for a simple mumps vaccine risk-benefit model.
 
-## Model definition
+## Current model
 
-This dashboard is an **annual incidence model**. It compares aseptic meningitis outcomes per 100,000 children per year according to vaccine coverage. It is not a birth-cohort follow-up model.
+This version uses a **cohort Markov model**.
 
-- Population denominator: 100,000 children in the target age group
-- Time horizon: 1 year
-- Main outcome: aseptic meningitis per 100,000 person-years
-- Future version: additional outcomes such as mumps-associated hearing loss
+- Population: hypothetical cohort of 100,000 children at the target age for vaccination
+- Vaccination: administered once at cohort entry according to the selected coverage
+- Time horizon: adjustable follow-up period X, from 1 to 20 years
+- Outcome: cumulative aseptic meningitis cases per 100,000 cohort
 
-## What it shows
+The model adds vaccine-associated aseptic meningitis once at cohort entry, then accumulates infection-associated aseptic meningitis over the follow-up period.
 
-- Natural infection-associated aseptic meningitis
+## Adjustable parameters
+
+- Vaccine coverage
+- Follow-up period X
+- Annual mumps incidence without vaccination
+- Aseptic meningitis after mumps infection
 - Vaccine-associated aseptic meningitis
-- Total aseptic meningitis
-- Sensitivity to vaccine coverage and assumptions
+- Initial vaccine effectiveness
+- Annual waning of vaccine effectiveness
+- Basic reproduction number R0
 
 ## How to publish on GitHub Pages
 
@@ -28,4 +34,4 @@ This dashboard is an **annual incidence model**. It compares aseptic meningitis 
 
 ## Notes
 
-This is a conceptual model for discussion. It does not fully represent age structure, contact structure, cyclic epidemics, waning immunity, multi-year cumulative risk, or cost-effectiveness outcomes. Hearing loss and other mumps complications are planned for a future version.
+This is a conceptual model for discussion. It does not fully represent age structure, contact structure, cyclic epidemics, real-world vaccine schedules, detailed waning immunity, or cost-effectiveness outcomes. Future versions may add mumps-associated hearing loss and other outcomes.

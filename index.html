@@ -3,20 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ムンプスワクチン リスク・ベネフィットモデル</title>
+  <title>ムンプスワクチン コホート・リスクベネフィットモデル</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>ムンプスワクチン接種率別リスク・ベネフィットモデル</h1>
-    <p>年間発生率モデル（Annual incidence model）：接種対象年齢の小児集団10万人を1年間観察した場合の、自然感染由来およびワクチン関連の無菌性髄膜炎を接種率別に比較します。</p>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Cohort Markov model</p>
+      <h1>ムンプスワクチン接種率別リスク・ベネフィットモデル</h1>
+      <p>接種対象年齢に達した仮想小児コホート10万人に、コホート参加時点でワクチンを接種するシナリオを置き、その後X年間の累積無菌性髄膜炎を推定します。</p>
+    </div>
   </header>
+
+  <section class="panel model-definition">
+    <h2>モデルの定義</h2>
+    <div class="definition-grid">
+      <div><span>対象集団</span><strong>接種対象年齢の仮想小児コホート 100,000人</strong></div>
+      <div><span>接種時点</span><strong>コホート参加時に1回だけ接種</strong></div>
+      <div><span>時間軸</span><strong><span id="horizonText">10</span>年間の累積リスク</strong></div>
+      <div><span>アウトカム</span><strong>無菌性髄膜炎のみ</strong></div>
+    </div>
+    <p class="note">ワクチン関連無菌性髄膜炎は接種直後の一過性リスクとして最初に1回だけ加算し、自然感染由来無菌性髄膜炎は追跡期間中に毎年累積します。</p>
+  </section>
 
   <main class="layout">
     <aside class="panel controls">
       <h2>入力パラメータ</h2>
-      <div class="model-badge">Annual incidence model / 年間発生率モデル</div>
 
       <div class="preset-row">
         <button data-preset="low">低リスク</button>
@@ -28,7 +41,11 @@
         <input id="coverage" type="range" min="0" max="100" step="1" value="80" />
       </label>
 
-      <label>ムンプス感染発生率: <strong><span id="infectionRateVal">3500</span> /10万人年</strong>
+      <label>追跡期間 X: <strong><span id="yearsVal">10</span>年</strong>
+        <input id="years" type="range" min="1" max="20" step="1" value="10" />
+      </label>
+
+      <label>年間ムンプス感染発生率（接種なし）: <strong><span id="infectionRateVal">3500</span> /10万人年</strong>
         <input id="infectionRate" type="range" min="2000" max="5000" step="100" value="3500" />
       </label>
 
@@ -40,11 +57,15 @@
         <input id="vaccineMeningitis" type="range" min="5" max="50" step="2.5" value="27.5" />
       </label>
 
-      <label>ワクチン有効性: <strong><span id="veVal">86</span>%</strong>
+      <label>初期ワクチン有効性: <strong><span id="veVal">86</span>%</strong>
         <select id="ve">
           <option value="0.72">1回接種 72%</option>
           <option value="0.86" selected>2回接種 86%</option>
         </select>
+      </label>
+
+      <label>年間効果減衰: <strong><span id="waningVal">1.6</span>%/年</strong>
+        <input id="waning" type="range" min="0" max="5" step="0.1" value="1.6" />
       </label>
 
       <label>R0: <strong><span id="r0Val">5.0</span></strong>
@@ -53,32 +74,27 @@
     </aside>
 
     <section class="panel chart-panel">
-      <h2>接種率別 無菌性髄膜炎</h2>
+      <h2>接種率別 累積無菌性髄膜炎</h2>
       <canvas id="mainChart"></canvas>
-      <p class="note">単位：無菌性髄膜炎 / 10万人年。これは出生コホートを長期追跡するモデルではなく、1年間の発生率を比較するモデルです。縦線は現在選択中の接種率。</p>
+      <p class="note">単位：接種対象コホート10万人あたり、X年間累積発生数。縦線は現在選択中の接種率。</p>
     </section>
 
     <aside class="panel summary">
       <h2>現在の設定での推定</h2>
-      <p class="summary-unit">単位：/10万人年</p>
       <div class="metric"><span>自然感染由来</span><strong id="infMen">—</strong></div>
       <div class="metric"><span>ワクチン由来</span><strong id="vacMen">—</strong></div>
       <div class="metric total"><span>合計</span><strong id="totMen">—</strong></div>
       <div class="metric"><span>接種なしとの差</span><strong id="diffMen">—</strong></div>
+      <div class="metric"><span>累積感染</span><strong id="cumInf">—</strong></div>
       <p id="interpretation" class="interpretation"></p>
     </aside>
   </main>
 
   <section class="panel wide">
     <h2>モデルの考え方</h2>
-    <div class="assumption-grid">
-      <div><strong>モデル種別</strong><br>年間発生率モデル（Annual incidence model）</div>
-      <div><strong>対象集団</strong><br>接種対象年齢の小児10万人</div>
-      <div><strong>時間軸</strong><br>1年間</div>
-      <div><strong>主要アウトカム</strong><br>無菌性髄膜炎 / 10万人年</div>
-    </div>
-    <p>接種率上昇により自然感染由来の無菌性髄膜炎は減少し、ワクチン関連無菌性髄膜炎は接種率に比例して増加すると仮定します。感染減少は、簡易SIRの考え方に基づき、有効感受性割合とR0から年次感染リスクを近似しています。</p>
-    <p class="caution">本モデルは概念整理用の簡易モデルです。出生コホートを10年・20年追跡する累積リスクモデルではありません。年齢構造、接触構造、流行周期、ワクチン効果減衰、複数年の蓄積効果は十分に反映していません。政策判断には、難聴、脳炎、精巣炎、入院、QALY、費用、社会的受容性も含めた総合評価が必要です。難聴などの追加アウトカムは次バージョンで実装予定です。</p>
+    <p>このモデルは、接種対象年齢に達した仮想コホート10万人を、コホート参加時点からX年間追跡する簡易マルコフモデルです。接種率に応じて接種群と未接種群に分け、接種直後にワクチン関連無菌性髄膜炎を1回だけ加算します。その後は毎年、感受性者の一部がムンプスに感染し、その一部が無菌性髄膜炎を発症すると仮定します。感染者は翌年以降、感染後免疫を獲得したものとして扱います。</p>
+    <p>感染リスクは、接種なしの場合の年間感染発生率を基準に、接種率、有効性、効果減衰、R0から近似した残存伝播割合を用いて調整しています。したがって、ワクチン関連リスクは接種直後の一過性リスクとして、自然感染由来リスクは追跡期間中に累積するリスクとして表示されます。</p>
+    <p class="caution">本モデルは概念整理用の簡易モデルです。年齢構造、接触構造、流行周期、実際の接種スケジュール、ワクチン効果減衰の詳細、集団免疫の厳密な動態は十分に反映していません。政策判断には、難聴、脳炎、精巣炎、入院、QALY、費用、社会的受容性も含めた総合評価が必要です。難聴などのアウトカムは次版で追加予定です。</p>
   </section>
 
   <script src="app.js"></script>
