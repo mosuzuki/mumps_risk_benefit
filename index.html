@@ -10,12 +10,13 @@
 <body>
   <header>
     <h1>ムンプスワクチン接種率別リスク・ベネフィットモデル</h1>
-    <p>自然感染由来の無菌性髄膜炎と、ワクチン関連無菌性髄膜炎を、接種率別に比較する簡易モデルです。</p>
+    <p>年間発生率モデル（Annual incidence model）：接種対象年齢の小児集団10万人を1年間観察した場合の、自然感染由来およびワクチン関連の無菌性髄膜炎を接種率別に比較します。</p>
   </header>
 
   <main class="layout">
     <aside class="panel controls">
       <h2>入力パラメータ</h2>
+      <div class="model-badge">Annual incidence model / 年間発生率モデル</div>
 
       <div class="preset-row">
         <button data-preset="low">低リスク</button>
@@ -54,11 +55,12 @@
     <section class="panel chart-panel">
       <h2>接種率別 無菌性髄膜炎</h2>
       <canvas id="mainChart"></canvas>
-      <p class="note">単位：10万人あたり年間発生数。縦線は現在選択中の接種率。</p>
+      <p class="note">単位：無菌性髄膜炎 / 10万人年。これは出生コホートを長期追跡するモデルではなく、1年間の発生率を比較するモデルです。縦線は現在選択中の接種率。</p>
     </section>
 
     <aside class="panel summary">
       <h2>現在の設定での推定</h2>
+      <p class="summary-unit">単位：/10万人年</p>
       <div class="metric"><span>自然感染由来</span><strong id="infMen">—</strong></div>
       <div class="metric"><span>ワクチン由来</span><strong id="vacMen">—</strong></div>
       <div class="metric total"><span>合計</span><strong id="totMen">—</strong></div>
@@ -69,8 +71,14 @@
 
   <section class="panel wide">
     <h2>モデルの考え方</h2>
+    <div class="assumption-grid">
+      <div><strong>モデル種別</strong><br>年間発生率モデル（Annual incidence model）</div>
+      <div><strong>対象集団</strong><br>接種対象年齢の小児10万人</div>
+      <div><strong>時間軸</strong><br>1年間</div>
+      <div><strong>主要アウトカム</strong><br>無菌性髄膜炎 / 10万人年</div>
+    </div>
     <p>接種率上昇により自然感染由来の無菌性髄膜炎は減少し、ワクチン関連無菌性髄膜炎は接種率に比例して増加すると仮定します。感染減少は、簡易SIRの考え方に基づき、有効感受性割合とR0から年次感染リスクを近似しています。</p>
-    <p class="caution">本モデルは概念整理用の簡易モデルです。年齢構造、接触構造、流行周期、ワクチン効果減衰、複数年の蓄積効果は十分に反映していません。政策判断には、難聴、脳炎、精巣炎、入院、QALY、費用、社会的受容性も含めた総合評価が必要です。</p>
+    <p class="caution">本モデルは概念整理用の簡易モデルです。出生コホートを10年・20年追跡する累積リスクモデルではありません。年齢構造、接触構造、流行周期、ワクチン効果減衰、複数年の蓄積効果は十分に反映していません。政策判断には、難聴、脳炎、精巣炎、入院、QALY、費用、社会的受容性も含めた総合評価が必要です。難聴などの追加アウトカムは次バージョンで実装予定です。</p>
   </section>
 
   <script src="app.js"></script>

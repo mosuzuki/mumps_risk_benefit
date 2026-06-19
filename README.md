@@ -1,6 +1,15 @@
 # Mumps vaccine risk-benefit dashboard
 
-Static GitHub Pages dashboard for a simple mumps vaccine risk-benefit model.
+Static GitHub Pages dashboard for a simple mumps vaccine risk-benefit model. This version is explicitly defined as an annual incidence model.
+
+## Model definition
+
+This dashboard is an **annual incidence model**. It compares aseptic meningitis outcomes per 100,000 children per year according to vaccine coverage. It is not a birth-cohort follow-up model.
+
+- Population denominator: 100,000 children in the target age group
+- Time horizon: 1 year
+- Main outcome: aseptic meningitis per 100,000 person-years
+- Future version: additional outcomes such as mumps-associated hearing loss
 
 ## What it shows
 
@@ -19,4 +28,4 @@ Static GitHub Pages dashboard for a simple mumps vaccine risk-benefit model.
 
 ## Notes
 
-This is a conceptual model for discussion. It does not fully represent age structure, contact structure, cyclic epidemics, waning immunity, or cost-effectiveness outcomes.
+This is a conceptual model for discussion. It does not fully represent age structure, contact structure, cyclic epidemics, waning immunity, multi-year cumulative risk, or cost-effectiveness outcomes. Hearing loss and other mumps complications are planned for a future version.

@@ -31,3 +31,35 @@ canvas { width: 100% !important; height: 430px !important; }
 .wide { margin: 0 18px 24px; }
 .wide p { line-height: 1.8; }
 @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } canvas { height: 360px !important; } }
+
+.model-badge {
+  display: inline-block;
+  margin: -4px 0 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3e8ff;
+  color: #5b21b6;
+  font-size: 12px;
+  font-weight: 700;
+}
+.summary-unit {
+  margin: -8px 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.assumption-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.assumption-grid div {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fafafa;
+  line-height: 1.55;
+  font-size: 14px;
+}
+@media (max-width: 900px) { .assumption-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .assumption-grid { grid-template-columns: 1fr; } }
