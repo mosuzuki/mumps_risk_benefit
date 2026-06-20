@@ -98,8 +98,9 @@ button {
 }
 button.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-.chart-panel { min-height: 720px; }
-.chart-panel canvas { width: 100%; min-height: 610px; }
+.chart-panel { min-height: auto; }
+.chart-wrap { position: relative; width: 100%; height: 520px; max-height: 62vh; min-height: 360px; }
+.chart-panel canvas { width: 100% !important; height: 100% !important; display: block; }
 .note { color: var(--muted); font-size: .9rem; margin-bottom: 0; }
 .caution {
   background: var(--danger-soft);
@@ -139,12 +140,15 @@ button.active { background: var(--accent); color: white; border-color: var(--acc
       "controls"
       "summary";
   }
-  .chart-panel { min-height: 560px; }
-  .chart-panel canvas { min-height: 460px; }
+  .chart-wrap { height: 460px; max-height: 58vh; }
   .definition-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
   .hero, .panel { padding: 16px; }
   .hero > div, .model-definition, .layout, .wide { margin-left: 10px; margin-right: 10px; }
   .definition-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .chart-wrap { height: 360px; max-height: 55vh; min-height: 300px; }
 }
