@@ -49,8 +49,13 @@
     .metric-card.total{background:#fff7ed}
     .context-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
     .context-item{border:1px solid #cfe0ff;background:#eff6ff;border-radius:14px;padding:10px 12px}
-    .context-item span{display:block;font-size:12px;color:#1d4ed8;font-weight:950;letter-spacing:.03em}
-    .context-item strong{display:block;font-size:24px;line-height:1.15;margin-top:3px;color:#0f172a}
+    .context-item span{display:block;font-size:17px;color:#1d4ed8;font-weight:950;letter-spacing:.03em}
+    .context-item strong{display:block;font-size:clamp(36px,4.2vw,48px);line-height:1.05;margin-top:6px;color:#0f172a;letter-spacing:-.04em}
+    .br-metric{margin-top:10px;border:2px solid #ddd6fe;border-top:7px solid var(--purple);background:linear-gradient(180deg,#f5f3ff,#ffffff);border-radius:15px;padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+    .br-metric span{display:block;font-size:17px;font-weight:950;color:#4c1d95;line-height:1.35}
+    .br-metric strong{display:block;font-size:42px;line-height:1;color:#6d28d9;letter-spacing:-.03em;text-align:right}
+    .br-metric small{display:block;margin-top:6px;color:#6b7280;font-size:13px;font-weight:800}
+    .br-note{grid-column:1 / -1;margin:0;color:#6b7280;font-size:13px;font-weight:750}
     .summary-foot{display:grid;grid-template-columns:1fr;gap:6px;margin-top:10px}
     .interpretation{margin:0;font-size:14px;font-weight:800;color:#0f172a;background:#eef6ff;border-radius:12px;padding:10px 12px}
     .assumption-line{margin:0;color:var(--muted);font-size:12px}
@@ -65,7 +70,7 @@
     .wide p{font-size:14px;color:#334155;margin:8px 0}
     .caution{border-left:4px solid #f59e0b;background:#fffbeb;border-radius:10px;padding:12px!important}
     @media (max-width:980px){.layout{grid-template-columns:1fr}.controls{position:static}.summary-metrics{grid-template-columns:1fr auto 1fr;}.summary-metrics .metric-card.prevented{grid-column:1 / -1}.context-strip{grid-template-columns:1fr 1fr 1fr}.chart-wrap{height:430px}.summary-title-row{flex-direction:column}.mini-results{justify-content:flex-start}}
-    @media (max-width:620px){h1{font-size:22px}.summary-metrics{grid-template-columns:1fr}.math-op{display:none}.metric-card strong{font-size:34px}.context-strip{grid-template-columns:1fr}.chart-wrap{height:360px}.layout,.hero{padding-left:12px;padding-right:12px}}
+    @media (max-width:620px){h1{font-size:22px}.summary-metrics{grid-template-columns:1fr}.math-op{display:none}.metric-card strong{font-size:34px}.context-strip{grid-template-columns:1fr}.context-item strong{font-size:36px}.br-metric{grid-template-columns:1fr}.br-metric strong{text-align:left;font-size:34px}.chart-wrap{height:360px}.layout,.hero{padding-left:12px;padding-right:12px}}
   </style>
 </head>
 <body>
@@ -147,6 +152,15 @@
           <div class="metric-card prevented"><span>予防された無菌性髄膜炎</span><strong id="preventedMen">—</strong><small>例</small></div>
         </div>
 
+        <div class="br-metric" aria-label="B/R比">
+          <div>
+            <span>B/R比（無菌性髄膜炎のみ）</span>
+            <small>予防された無菌性髄膜炎 ÷ ワクチン由来の無菌性髄膜炎</small>
+          </div>
+          <strong id="brRatioBig">—</strong>
+          <p class="br-note">この指標は無菌性髄膜炎の症例数のみを対象とし、難聴、脳炎、入院、QALY、費用などは含みません。</p>
+        </div>
+
         <div class="summary-foot">
           <p id="interpretation" class="interpretation"></p>
           <p class="assumption-line" id="assumptionLine">—</p>
@@ -158,7 +172,6 @@
         <div class="mini-results">
           <span>累積感染 <strong id="cumInf">—</strong></span>
           <span>接種なしとの差 <strong id="diffMen">—</strong></span>
-          <span>B/R比 <strong id="brRatio">—</strong></span>
         </div>
       </div>
       <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
@@ -319,7 +332,7 @@ function update(){
   el('totMen').textContent = fmt(sel.total);
   el('cumInf').textContent = fmt(sel.infections) + '人';
   el('diffMen').textContent = (sel.net>=0 ? '−' : '+') + fmt(Math.abs(sel.net)) + '例';
-  el('brRatio').textContent = sel.vaccine > 0 ? (sel.prevented/sel.vaccine).toFixed(1) : '—';
+  el('brRatioBig').textContent = sel.vaccine > 0 ? (sel.prevented/sel.vaccine).toFixed(1) : '—';
 
   const netText = sel.net >= 0 ? `接種なしと比べて合計で約${fmt(sel.net)}例少ない` : `接種なしと比べて合計で約${fmt(Math.abs(sel.net))}例多い`;
   el('interpretation').textContent = `接種率${Math.round(p.coverage*100)}%、追跡期間${p.years}年では、ワクチン由来${fmt(sel.vaccine)}例、自然感染由来${fmt(sel.infection)}例、予防された無菌性髄膜炎は${fmt(Math.max(0,sel.prevented))}例です。${netText}推定です。`;
