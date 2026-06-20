@@ -1,23 +1,10 @@
-# ムンプスワクチン接種率別リスク・ベネフィットモデル
+# Mumps vaccine dashboard
 
-静的な GitHub Pages 用ダッシュボードです。`index.html` 単体で動作します。
+Static GitHub Pages dashboard.
 
-## v11 changes
+## Modes
 
-- 上部サマリーパネルを4段構成に整理
-  1. 接種率・追跡期間・対象集団
-  2. ワクチン由来 + 自然感染由来 = 合計無菌性髄膜炎
-  3. 予防された自然感染による無菌性髄膜炎・ネット減少数
-  4. B/R比（従来型・無菌性髄膜炎のみ）
-- 重複していた文章説明パネルを削除
-- 接種率、追跡期間、対象集団の数値と単位の視認性を調整
+1. Mode 1: Aseptic meningitis only.
+2. Mode 2: Net Medical Cost model.
 
-## Model
-
-仮想小児コホート10万人を、コホート参加時点で接種するシナリオとして追跡します。ワクチン関連無菌性髄膜炎は接種時に1回だけ加算し、自然感染由来無菌性髄膜炎は追跡期間中に累積します。
-
-
-## v12 update
-- Added a clear setting-conditions section.
-- Harmonized font hierarchy between setting cards and outcome cards.
-- Network reduction is displayed as an absolute number with explanatory text.
+Upload `index.html` to the repository root and enable GitHub Pages.
