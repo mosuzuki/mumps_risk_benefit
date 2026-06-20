@@ -1,37 +1,29 @@
 # Mumps vaccine risk-benefit dashboard
 
-Static GitHub Pages dashboard for a simple mumps vaccine risk-benefit model.
+This is a static GitHub Pages dashboard for a simplified cohort Markov model of mumps vaccination and aseptic meningitis.
 
-## Current model
+## Model definition
 
-This version uses a **cohort Markov model**.
-
-- Population: hypothetical cohort of 100,000 children at the target age for vaccination
-- Vaccination: administered once at cohort entry according to the selected coverage
-- Time horizon: adjustable follow-up period X, from 1 to 20 years
+- Population: hypothetical cohort of 100,000 children at vaccination age
+- Vaccination: administered once at cohort entry according to selected coverage
+- Time horizon: user-selected follow-up period X years
 - Outcome: cumulative aseptic meningitis cases per 100,000 cohort
+- Vaccine-associated aseptic meningitis: added once at cohort entry
+- Infection-associated aseptic meningitis: accumulated annually over the follow-up period
 
-The model adds vaccine-associated aseptic meningitis once at cohort entry, then accumulates infection-associated aseptic meningitis over the follow-up period.
+## Parameters
 
-## Adjustable parameters
-
-- Vaccine coverage
-- Follow-up period X
-- Annual mumps incidence without vaccination
-- Aseptic meningitis after mumps infection
-- Vaccine-associated aseptic meningitis
-- Initial vaccine effectiveness
-- Annual waning of vaccine effectiveness
-- Basic reproduction number R0
-
-## How to publish on GitHub Pages
-
-1. Create a new repository.
-2. Upload `index.html`, `style.css`, `app.js`, and `README.md` to the repository root.
-3. Go to Settings → Pages.
-4. Set source to `Deploy from a branch`, branch `main`, folder `/root`.
-5. Open the GitHub Pages URL after deployment.
+- Vaccine coverage: 0-100%
+- Follow-up period: 1-20 years
+- Annual mumps incidence without vaccination: 2,000-5,000 per 100,000 person-years
+- Aseptic meningitis after mumps infection: 5-10 per 1,000 infections
+- Vaccine-associated aseptic meningitis: 5-50 per 100,000 vaccinees
+- Initial vaccine effectiveness: 72% or 86%
+- Annual waning: 0-5% per year
+- R0: 4-7
 
 ## Notes
 
-This is a conceptual model for discussion. It does not fully represent age structure, contact structure, cyclic epidemics, real-world vaccine schedules, detailed waning immunity, or cost-effectiveness outcomes. Future versions may add mumps-associated hearing loss and other outcomes.
+This is a conceptual model. It is not a full dynamic age-structured transmission model. It is intended to show that vaccine-associated meningitis is a one-time short-term risk, whereas infection-associated meningitis accumulates over the follow-up period.
+
+Future versions may add hearing loss, encephalitis, orchitis, hospitalization, QALYs, and cost-effectiveness outputs.

@@ -13,6 +13,7 @@ const els = {
   coverageVal: document.getElementById('coverageVal'),
   yearsVal: document.getElementById('yearsVal'),
   horizonText: document.getElementById('horizonText'),
+  chartHorizonText: document.getElementById('chartHorizonText'),
   infectionRateVal: document.getElementById('infectionRateVal'),
   meningitisRateVal: document.getElementById('meningitisRateVal'),
   vaccineMeningitisVal: document.getElementById('vaccineMeningitisVal'),
@@ -47,38 +48,47 @@ function params() {
 }
 
 function residualTransmissionFraction(coverage, effectiveVe, r0) {
-  const susceptibleFraction = Math.max(0, 1 - coverage * effectiveVe);
+  const effectiveImmuneFraction = Math.max(0, Math.min(1, coverage * effectiveVe));
+  const susceptibleFraction = 1 - effectiveImmuneFraction;
   const re = r0 * susceptibleFraction;
+
+  // Simple threshold approximation: when Re remains above 1, transmission decreases
+  // gradually; below 1, only a small residual sporadic risk is retained.
   let frac;
   if (re > 1) {
     frac = (re - 1) / (r0 - 1);
   } else {
-    // Small residual sporadic risk below the epidemic threshold.
     frac = 0.02 * re;
   }
   return Math.max(0, Math.min(1, frac));
 }
 
 function simulateCohort(coverage, p) {
+  // Hypothetical cohort of 100,000 children entering at vaccination age.
+  // Vaccine-associated meningitis is added once at cohort entry.
+  // Infection-associated meningitis accumulates over the selected follow-up period.
   let susceptibleUnvaccinated = N * (1 - coverage);
   let susceptibleVaccinated = N * coverage;
   let cumulativeInfections = 0;
   let infectionMeningitis = 0;
 
   const vaccineMeningitis = coverage * p.vaccineMeningitis;
+  const baselineAnnualRisk = p.infectionRate / 100000;
 
   for (let year = 0; year < p.years; year++) {
     const veYear = Math.max(0, p.ve * Math.pow(1 - p.waning, year));
-    const transmission = residualTransmissionFraction(coverage, veYear, p.r0);
-    const baselineAnnualRisk = p.infectionRate / 100000;
-    const forceOfInfection = Math.min(1, baselineAnnualRisk * transmission);
+    const transmissionFraction = residualTransmissionFraction(coverage, veYear, p.r0);
+    const communityRisk = Math.min(0.95, baselineAnnualRisk * transmissionFraction);
 
-    const infectionsUnvaccinated = Math.min(susceptibleUnvaccinated, susceptibleUnvaccinated * forceOfInfection);
-    const infectionsVaccinated = Math.min(susceptibleVaccinated, susceptibleVaccinated * forceOfInfection * (1 - veYear));
-    const infections = infectionsUnvaccinated + infectionsVaccinated;
+    const riskUnvaccinated = communityRisk;
+    const riskVaccinated = Math.max(0, Math.min(0.95, communityRisk * (1 - veYear)));
 
-    cumulativeInfections += infections;
-    infectionMeningitis += infections * p.meningitisRate;
+    const infectionsUnvaccinated = susceptibleUnvaccinated * riskUnvaccinated;
+    const infectionsVaccinated = susceptibleVaccinated * riskVaccinated;
+    const infectionsThisYear = infectionsUnvaccinated + infectionsVaccinated;
+
+    cumulativeInfections += infectionsThisYear;
+    infectionMeningitis += infectionsThisYear * p.meningitisRate;
 
     susceptibleUnvaccinated -= infectionsUnvaccinated;
     susceptibleVaccinated -= infectionsVaccinated;
@@ -118,14 +128,15 @@ const chart = new Chart(ctx, {
   data: {
     labels: coverageValues,
     datasets: [
-      { label: '自然感染由来', data: [], tension: 0.25, pointRadius: 0, borderWidth: 2 },
-      { label: 'ワクチン由来', data: [], tension: 0.25, pointRadius: 0, borderWidth: 2 },
-      { label: '合計', data: [], tension: 0.25, pointRadius: 0, borderWidth: 3 }
+      { label: '自然感染由来', data: [], tension: 0.2, pointRadius: 0, borderWidth: 2 },
+      { label: 'ワクチン由来', data: [], tension: 0.2, pointRadius: 0, borderWidth: 2 },
+      { label: '合計', data: [], tension: 0.2, pointRadius: 0, borderWidth: 3 }
     ]
   },
   options: {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { position: 'bottom' },
@@ -137,7 +148,7 @@ const chart = new Chart(ctx, {
       }
     },
     scales: {
-      x: { title: { display: true, text: '接種率 (%)' }, ticks: { callback: (v) => `${v}%` } },
+      x: { title: { display: true, text: '接種率 (%)' }, ticks: { callback: (v) => `${v}%`, maxTicksLimit: 11 } },
       y: { title: { display: true, text: '累積無菌性髄膜炎 /10万人コホート' }, beginAtZero: true }
     }
   },
@@ -151,7 +162,8 @@ function updateText(p) {
   els.coverageVal.textContent = Math.round(p.coverage * 100);
   els.yearsVal.textContent = p.years;
   els.horizonText.textContent = p.years;
-  els.infectionRateVal.textContent = p.infectionRate;
+  if (els.chartHorizonText) els.chartHorizonText.textContent = p.years;
+  els.infectionRateVal.textContent = p.infectionRate.toLocaleString('ja-JP');
   els.meningitisRateVal.textContent = (p.meningitisRate * 1000).toFixed(1).replace('.0', '');
   els.vaccineMeningitisVal.textContent = p.vaccineMeningitis.toFixed(1).replace('.0', '');
   els.veVal.textContent = Math.round(p.ve * 100);
@@ -177,7 +189,7 @@ function update() {
   chart.data.datasets[0].data = infectionData;
   chart.data.datasets[1].data = vaccineData;
   chart.data.datasets[2].data = totalData;
-  chart.update();
+  chart.update('none');
 
   const current = simulateCohort(p.coverage, p);
   const baseline = simulateCohort(0, p);
@@ -190,7 +202,7 @@ function update() {
   els.cumInf.textContent = `${format0(current.cumulativeInfections)}人`;
 
   if (diff < -5) {
-    els.interpretation.textContent = `現在の設定では、接種によりX年間累積の無菌性髄膜炎は接種なしより少なく推定されます。`;
+    els.interpretation.textContent = `現在の設定では、接種により${p.years}年間累積の無菌性髄膜炎は接種なしより少なく推定されます。`;
   } else if (diff > 5) {
     els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、接種なしより多く推定されます。ワクチン関連髄膜炎率などの仮定に敏感です。`;
   } else {
