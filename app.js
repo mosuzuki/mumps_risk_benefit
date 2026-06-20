@@ -12,7 +12,6 @@ const els = {
   r0: document.getElementById('r0'),
   coverageVal: document.getElementById('coverageVal'),
   yearsVal: document.getElementById('yearsVal'),
-  horizonText: document.getElementById('horizonText'),
   chartHorizonText: document.getElementById('chartHorizonText'),
   infectionRateVal: document.getElementById('infectionRateVal'),
   meningitisRateVal: document.getElementById('meningitisRateVal'),
@@ -20,11 +19,16 @@ const els = {
   veVal: document.getElementById('veVal'),
   waningVal: document.getElementById('waningVal'),
   r0Val: document.getElementById('r0Val'),
+  summaryCoverage: document.getElementById('summaryCoverage'),
+  summaryYears: document.getElementById('summaryYears'),
   infMen: document.getElementById('infMen'),
   vacMen: document.getElementById('vacMen'),
+  preventedMen: document.getElementById('preventedMen'),
   totMen: document.getElementById('totMen'),
   diffMen: document.getElementById('diffMen'),
   cumInf: document.getElementById('cumInf'),
+  brRatio: document.getElementById('brRatio'),
+  assumptionLine: document.getElementById('assumptionLine'),
   interpretation: document.getElementById('interpretation')
 };
 
@@ -161,8 +165,9 @@ function format0(x) { return Math.round(Number(x)).toLocaleString('ja-JP'); }
 function updateText(p) {
   els.coverageVal.textContent = Math.round(p.coverage * 100);
   els.yearsVal.textContent = p.years;
-  els.horizonText.textContent = p.years;
   if (els.chartHorizonText) els.chartHorizonText.textContent = p.years;
+  if (els.summaryCoverage) els.summaryCoverage.textContent = Math.round(p.coverage * 100);
+  if (els.summaryYears) els.summaryYears.textContent = p.years;
   els.infectionRateVal.textContent = p.infectionRate.toLocaleString('ja-JP');
   els.meningitisRateVal.textContent = (p.meningitisRate * 1000).toFixed(1).replace('.0', '');
   els.vaccineMeningitisVal.textContent = p.vaccineMeningitis.toFixed(1).replace('.0', '');
@@ -193,20 +198,25 @@ function update() {
 
   const current = simulateCohort(p.coverage, p);
   const baseline = simulateCohort(0, p);
+  const prevented = baseline.infectionMeningitis - current.infectionMeningitis;
   const diff = current.totalMeningitis - baseline.totalMeningitis;
+  const brRatio = current.vaccineMeningitis > 0 ? prevented / current.vaccineMeningitis : null;
 
   els.infMen.textContent = `${format1(current.infectionMeningitis)}例`;
   els.vacMen.textContent = `${format1(current.vaccineMeningitis)}例`;
+  els.preventedMen.textContent = `${format1(prevented)}例`;
   els.totMen.textContent = `${format1(current.totalMeningitis)}例`;
   els.diffMen.textContent = `${diff >= 0 ? '+' : ''}${format1(diff)}例`;
   els.cumInf.textContent = `${format0(current.cumulativeInfections)}人`;
+  els.brRatio.textContent = brRatio === null ? '—' : `${format1(brRatio)} : 1`;
+  els.assumptionLine.textContent = `モデル定義：接種対象年齢の仮想小児コホート10万人を、コホート参加時から${p.years}年間追跡。ワクチン関連無菌性髄膜炎は接種時に1回だけ加算し、自然感染由来リスクは追跡期間中に累積。VE ${Math.round(p.ve * 100)}%、年間減衰 ${(p.waning * 100).toFixed(1).replace('.0', '')}%、接種なし感染率 ${p.infectionRate.toLocaleString('ja-JP')}/10万人年。`;
 
-  if (diff < -5) {
-    els.interpretation.textContent = `現在の設定では、接種により${p.years}年間累積の無菌性髄膜炎は接種なしより少なく推定されます。`;
-  } else if (diff > 5) {
-    els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、接種なしより多く推定されます。ワクチン関連髄膜炎率などの仮定に敏感です。`;
+  if (prevented > current.vaccineMeningitis + 5) {
+    els.interpretation.textContent = `現在の設定では、ワクチン由来リスクを上回る感染由来無菌性髄膜炎の予防が推定されます。`;
+  } else if (current.vaccineMeningitis > prevented + 5) {
+    els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、ワクチン由来リスクが予防数を上回る可能性があります。`;
   } else {
-    els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、接種なしとの差は小さく推定されます。`;
+    els.interpretation.textContent = `現在の設定では、無菌性髄膜炎だけを見ると、ワクチン由来リスクと予防数は近い水準です。`;
   }
 }
 
