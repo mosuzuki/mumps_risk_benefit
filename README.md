@@ -1,16 +1,12 @@
 # Mumps vaccine benefit-risk dashboard
 
-Static GitHub Pages dashboard for a simplified cohort Markov model of mumps vaccination.
+Static GitHub Pages dashboard for a simplified cohort Markov model of mumps vaccination and aseptic meningitis.
 
-## Model definition
+## Latest changes
 
-- Population: hypothetical cohort of 100,000 children at vaccination age
-- Vaccination: at cohort entry
-- Follow-up: 1–10 years, default 5 years
-- Vaccine-associated aseptic meningitis is added once at vaccination
-- Infection-associated aseptic meningitis accumulates over follow-up
-- Vaccine protection wanes annually
-- Natural infection confers non-waning immunity in this simplified model
-- Infection risk is approximated using the susceptible fraction and R0
+- Top summary panel now explicitly shows: vaccine-associated + infection-associated = total aseptic meningitis.
+- Prevented aseptic meningitis is shown as the rightmost highlighted benefit card.
+- Vaccine coverage, follow-up period, and cohort size (100,000 children) are displayed prominently above the summary metrics.
+- Model includes vaccine immunity waning and accumulation of natural infection-induced immunity.
 
-This is a conceptual model for discussion, not a formal policy model.
+Upload `index.html` to the repository root and enable GitHub Pages.
