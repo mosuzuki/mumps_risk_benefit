@@ -15,3 +15,9 @@
 ## Model
 
 仮想小児コホート10万人を、コホート参加時点で接種するシナリオとして追跡します。ワクチン関連無菌性髄膜炎は接種時に1回だけ加算し、自然感染由来無菌性髄膜炎は追跡期間中に累積します。
+
+
+## v12 update
+- Added a clear setting-conditions section.
+- Harmonized font hierarchy between setting cards and outcome cards.
+- Network reduction is displayed as an absolute number with explanatory text.
