@@ -1,12 +1,17 @@
-# Mumps vaccine benefit-risk dashboard
+# ムンプスワクチン接種率別リスク・ベネフィットモデル
 
-Static GitHub Pages dashboard for a simplified cohort Markov model comparing cumulative aseptic meningitis associated with natural mumps infection and vaccine-associated aseptic meningitis.
+静的な GitHub Pages 用ダッシュボードです。`index.html` 単体で動作します。
 
-This version improves the top summary panel:
-- Larger scenario cards for vaccine coverage, follow-up duration, and cohort size
-- Clear equation-style display: vaccine-associated + infection-associated = total aseptic meningitis
-- Highlighted prevented aseptic meningitis
-- Large B/R ratio shown beneath the main outcome cards
-- B/R ratio explicitly defined as prevented aseptic meningitis divided by vaccine-associated aseptic meningitis, limited to aseptic meningitis cases only
+## v11 changes
 
-Open `index.html` directly or publish it with GitHub Pages.
+- 上部サマリーパネルを4段構成に整理
+  1. 接種率・追跡期間・対象集団
+  2. ワクチン由来 + 自然感染由来 = 合計無菌性髄膜炎
+  3. 予防された自然感染による無菌性髄膜炎・ネット減少数
+  4. B/R比（従来型・無菌性髄膜炎のみ）
+- 重複していた文章説明パネルを削除
+- 接種率、追跡期間、対象集団の数値と単位の視認性を調整
+
+## Model
+
+仮想小児コホート10万人を、コホート参加時点で接種するシナリオとして追跡します。ワクチン関連無菌性髄膜炎は接種時に1回だけ加算し、自然感染由来無菌性髄膜炎は追跡期間中に累積します。
