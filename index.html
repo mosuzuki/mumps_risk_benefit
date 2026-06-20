@@ -5,74 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ムンプスワクチン リスク・ベネフィットモデル</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    :root{--bg:#f4f6f8;--panel:#fff;--text:#17202a;--muted:#5e6f80;--border:#dfe6ee;--accent:#2454a6;--accent-soft:#eaf1ff;--good:#13734a;--good-soft:#e8f7ef;--warn-soft:#fff6e7;--shadow:0 10px 28px rgba(20,33,53,.08)}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+    .wrap{max-width:1180px;margin:0 auto;padding:0 18px}.hero{background:linear-gradient(135deg,#153b76,#2863be);color:#fff;padding:24px 0}.hero h1{font-size:clamp(1.45rem,2.5vw,2.15rem);margin:.15rem 0 .4rem}.hero p{margin:0;max-width:980px;opacity:.94}.eyebrow{margin:0;text-transform:uppercase;letter-spacing:.09em;font-size:.8rem;font-weight:800}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:18px}.summary{margin-top:18px}.summary-top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.kicker{margin:0 0 2px;color:var(--accent);font-weight:800}.summary h2{margin:0;font-size:clamp(1.35rem,2.4vw,2.05rem)}.badge{white-space:nowrap;background:var(--accent-soft);color:var(--accent);font-weight:800;border-radius:999px;padding:8px 13px;font-size:.88rem}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.metric{border:1px solid var(--border);border-radius:15px;padding:13px;background:#fff;min-height:112px}.metric span{display:block;color:var(--muted);font-size:.87rem;min-height:40px}.metric strong{display:block;margin-top:7px;font-size:clamp(1.75rem,3vw,2.35rem);line-height:1}.metric.prevented{background:var(--good-soft);border-color:#b9e2cd}.metric.prevented strong{color:var(--good)}.metric.total{background:var(--accent-soft);border-color:#c8d8f5}.metric.total strong{color:var(--accent)}.summary-note{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.interpretation{margin:0;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-weight:750}.assumption{margin:0;color:var(--muted);font-size:.88rem}
+    .main{display:grid;grid-template-columns:285px minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}.panel h3{font-size:1.05rem;margin:0 0 12px}.controls label{display:block;margin:13px 0;font-size:.9rem}.controls input[type=range],.controls select{width:100%;margin-top:6px}.controls select{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff}.preset-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}button{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700}button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .chart-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}.chart-title h3{margin:0}.mini{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.mini span{background:#f7f9fc;border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:.84rem}.mini strong{color:var(--text)}.chart-wrap{position:relative;width:100%;height:520px;max-height:520px;min-height:520px}.chart-wrap canvas{width:100%!important;height:100%!important;display:block}.note{color:var(--muted);font-size:.86rem;margin:10px 0 0}.wide{margin-top:18px;margin-bottom:22px}.wide p{margin:.6rem 0}.caution{background:var(--warn-soft);border-left:4px solid #df8b31;border-radius:10px;padding:12px 14px}
+    @media(max-width:980px){.main{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.summary-top,.chart-title{flex-direction:column}.badge{white-space:normal}.mini{justify-content:flex-start}.chart-wrap{height:440px;min-height:440px;max-height:440px}}
+    @media(max-width:620px){.wrap{padding:0 10px}.hero{padding:18px 0}.panel{padding:15px}.metrics{grid-template-columns:1fr}.metric{min-height:auto}.metric span{min-height:auto}.chart-wrap{height:340px;min-height:340px;max-height:340px}}
+  </style>
 </head>
 <body>
-  <header>
-    <h1>ムンプスワクチン接種率別リスク・ベネフィットモデル</h1>
-    <p>自然感染由来の無菌性髄膜炎と、ワクチン関連無菌性髄膜炎を、接種率別に比較する簡易モデルです。</p>
-  </header>
+<header class="hero"><div class="wrap"><p class="eyebrow">Cohort Markov model</p><h1>ムンプスワクチン接種率別リスク・ベネフィットモデル</h1><p>接種対象年齢に達した仮想小児コホート10万人に、コホート参加時点でワクチンを接種するシナリオを置き、その後X年間の累積無菌性髄膜炎を推定します。</p></div></header>
 
-  <main class="layout">
-    <aside class="panel controls">
-      <h2>入力パラメータ</h2>
-
-      <div class="preset-row">
-        <button data-preset="low">低リスク</button>
-        <button data-preset="mid" class="active">中央</button>
-        <button data-preset="high">高リスク</button>
-      </div>
-
-      <label>現在の接種率: <strong><span id="coverageVal">80</span>%</strong>
-        <input id="coverage" type="range" min="0" max="100" step="1" value="80" />
-      </label>
-
-      <label>ムンプス感染発生率: <strong><span id="infectionRateVal">3500</span> /10万人年</strong>
-        <input id="infectionRate" type="range" min="2000" max="5000" step="100" value="3500" />
-      </label>
-
-      <label>感染後無菌性髄膜炎率: <strong><span id="meningitisRateVal">7.5</span> /1,000感染</strong>
-        <input id="meningitisRate" type="range" min="5" max="10" step="0.5" value="7.5" />
-      </label>
-
-      <label>ワクチン関連無菌性髄膜炎: <strong><span id="vaccineMeningitisVal">27.5</span> /10万人接種</strong>
-        <input id="vaccineMeningitis" type="range" min="5" max="50" step="2.5" value="27.5" />
-      </label>
-
-      <label>ワクチン有効性: <strong><span id="veVal">86</span>%</strong>
-        <select id="ve">
-          <option value="0.72">1回接種 72%</option>
-          <option value="0.86" selected>2回接種 86%</option>
-        </select>
-      </label>
-
-      <label>R0: <strong><span id="r0Val">5.0</span></strong>
-        <input id="r0" type="range" min="4" max="7" step="0.1" value="5" />
-      </label>
-    </aside>
-
-    <section class="panel chart-panel">
-      <h2>接種率別 無菌性髄膜炎</h2>
-      <canvas id="mainChart"></canvas>
-      <p class="note">単位：10万人あたり年間発生数。縦線は現在選択中の接種率。</p>
-    </section>
-
-    <aside class="panel summary">
-      <h2>現在の設定での推定</h2>
-      <div class="metric"><span>自然感染由来</span><strong id="infMen">—</strong></div>
-      <div class="metric"><span>ワクチン由来</span><strong id="vacMen">—</strong></div>
-      <div class="metric total"><span>合計</span><strong id="totMen">—</strong></div>
-      <div class="metric"><span>接種なしとの差</span><strong id="diffMen">—</strong></div>
-      <p id="interpretation" class="interpretation"></p>
-    </aside>
-  </main>
-
-  <section class="panel wide">
-    <h2>モデルの考え方</h2>
-    <p>接種率上昇により自然感染由来の無菌性髄膜炎は減少し、ワクチン関連無菌性髄膜炎は接種率に比例して増加すると仮定します。感染減少は、簡易SIRの考え方に基づき、有効感受性割合とR0から年次感染リスクを近似しています。</p>
-    <p class="caution">本モデルは概念整理用の簡易モデルです。年齢構造、接触構造、流行周期、ワクチン効果減衰、複数年の蓄積効果は十分に反映していません。政策判断には、難聴、脳炎、精巣炎、入院、QALY、費用、社会的受容性も含めた総合評価が必要です。</p>
+<div class="wrap">
+  <section class="panel summary">
+    <div class="summary-top"><div><p class="kicker">現在の設定での推定</p><h2>接種率 <span id="summaryCoverage">80</span>%｜追跡期間 <span id="summaryYears">10</span>年</h2></div><div class="badge">仮想小児コホート 100,000人</div></div>
+    <div class="metrics">
+      <div class="metric"><span>ワクチン由来の無菌性髄膜炎</span><strong id="vacMen">—</strong></div>
+      <div class="metric"><span>自然感染由来の無菌性髄膜炎</span><strong id="infMen">—</strong></div>
+      <div class="metric prevented"><span>防がれた無菌性髄膜炎</span><strong id="preventedMen">—</strong></div>
+      <div class="metric total"><span>合計無菌性髄膜炎</span><strong id="totMen">—</strong></div>
+    </div>
+    <div class="summary-note"><p id="interpretation" class="interpretation">—</p><p id="assumptionLine" class="assumption">—</p></div>
   </section>
 
-  <script src="app.js"></script>
-</body>
-</html>
+  <main class="main">
+    <aside class="panel controls">
+      <h3>入力パラメータ</h3>
+      <div class="preset-row"><button data-preset="low">低リスク</button><button data-preset="mid" class="active">中央</button><button data-preset="high">高リスク</button></div>
+      <label>現在の接種率: <strong><span id="coverageVal">80</span>%</strong><input id="coverage" type="range" min="0" max="100" step="1" value="80"></label>
+      <label>追跡期間 X: <strong><span id="yearsVal">10</span>年</strong><input id="years" type="range" min="1" max="20" step="1" value="10"></label>
+      <label>年間ムンプス感染発生率（接種なし）: <strong><span id="infectionRateVal">3500</span> /10万人年</strong><input id="infectionRate" type="range" min="2000" max="5000" step="100" value="3500"></label>
+      <label>感染後無菌性髄膜炎率: <strong><span id="meningitisRateVal">7.5</span> /1,000感染</strong><input id="meningitisRate" type="range" min="5" max="10" step="0.5" value="7.5"></label>
+      <label>ワクチン関連無菌性髄膜炎: <strong><span id="vaccineMeningitisVal">27.5</span> /10万人接種</strong><input id="vaccineMeningitis" type="range" min="5" max="50" step="2.5" value="27.5"></label>
+      <label>初期ワクチン有効性: <strong><span id="veVal">86</span>%</strong><select id="ve"><option value="0.72">1回接種 72%</option><option value="0.86" selected>2回接種 86%</option></select></label>
+      <label>年間効果減衰: <strong><span id="waningVal">1.6</span>%/年</strong><input id="waning" type="range" min="0" max="5" step="0.1" value="1.6"></label>
+      <label>R0: <strong><span id="r0Val">5.0</span></strong><input id="r0" type="range" min="4" max="7" step="0.1" value="5"></label>
+    </aside>
+    <section class="panel chart-panel">
+      <div class="chart-title"><h3>接種率別 累積無菌性髄膜炎（<span id="chartHorizonText">10</span>年間）</h3><div class="mini"><span>累積感染 <strong id="cumInf">—</strong></span><span>接種なしとの差 <strong id="diffMen">—</strong></span><span>B/R比 <strong id="brRatio">—</strong></span></div></div>
+      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+      <p class="note">単位：接種対象コホート10万人あたり、X年間累積発生数。縦線は現在選択中の接種率。ワクチン関連無菌性髄膜炎は接種時に1回だけ、自然感染由来無菌性髄膜炎は追跡期間中に累積します。</p>
+    </section>
+  </main>
+
+  <section class="panel wide"><h3>モデルの考え方</h3><p>このモデルは、接種対象年齢に達した仮想コホート10万人を、コホート参加時点からX年間追跡する簡易マルコフモデルです。接種率に応じて接種群と未接種群に分け、接種直後にワクチン関連無菌性髄膜炎を1回だけ加算します。その後は毎年、感受性者の一部がムンプスに感染し、その一部が無菌性髄膜炎を発症すると仮定します。感染者は翌年以降、感染後免疫を獲得したものとして扱います。</p><p>感染リスクは、接種なしの場合の年間感染発生率を基準に、接種率、有効性、効果減衰、R0から近似した残存伝播割合を用いて調整しています。</p><p class="caution">本モデルは概念整理用の簡易モデルです。年齢構造、接触構造、流行周期、実際の接種スケジュール、ワクチン効果減衰の詳細、集団免疫の厳密な動態は十分に反映していません。政策判断には、難聴、脳炎、精巣炎、入院、QALY、費用、社会的受容性も含めた総合評価が必要です。難聴などのアウトカムは次版で追加予定です。</p></section>
+</div>
+
+<script>
+const N=100000; const coverageValues=Array.from({length:101},(_,i)=>i);
+const $=id=>document.getElementById(id);
+const els={coverage:$('coverage'),years:$('years'),infectionRate:$('infectionRate'),meningitisRate:$('meningitisRate'),vaccineMeningitis:$('vaccineMeningitis'),ve:$('ve'),waning:$('waning'),r0:$('r0'),coverageVal:$('coverageVal'),yearsVal:$('yearsVal'),chartHorizonText:$('chartHorizonText'),infectionRateVal:$('infectionRateVal'),meningitisRateVal:$('meningitisRateVal'),vaccineMeningitisVal:$('vaccineMeningitisVal'),veVal:$('veVal'),waningVal:$('waningVal'),r0Val:$('r0Val'),summaryCoverage:$('summaryCoverage'),summaryYears:$('summaryYears'),infMen:$('infMen'),vacMen:$('vacMen'),preventedMen:$('preventedMen'),totMen:$('totMen'),diffMen:$('diffMen'),cumInf:$('cumInf'),brRatio:$('brRatio'),assumptionLine:$('assumptionLine'),interpretation:$('interpretation')};
+const presets={low:{infectionRate:2000,meningitisRate:5,vaccineMeningitis:5,ve:0.86,waning:1.6,r0:5},mid:{infectionRate:3500,meningitisRate:7.5,vaccineMeningitis:27.5,ve:0.86,waning:1.6,r0:5},high:{infectionRate:5000,meningitisRate:10,vaccineMeningitis:50,ve:0.72,waning:3.9,r0:5}};
+function params(){return{coverage:+els.coverage.value/100,years:+els.years.value,infectionRate:+els.infectionRate.value,meningitisRate:+els.meningitisRate.value/1000,vaccineMeningitis:+els.vaccineMeningitis.value,ve:+els.ve.value,waning:+els.waning.value/100,r0:+els.r0.value}}
+function residualTransmissionFraction(c,ve,r0){const immune=Math.max(0,Math.min(1,c*ve));const re=r0*(1-immune);let frac=re>1?(re-1)/(r0-1):0.02*re;return Math.max(0,Math.min(1,frac));}
+function simulateCohort(c,p){let sUn=N*(1-c), sVac=N*c, cumInf=0, infMen=0; const vacMen=c*p.vaccineMeningitis; const baseRisk=p.infectionRate/100000; for(let y=0;y<p.years;y++){const veY=Math.max(0,p.ve*Math.pow(1-p.waning,y));const trans=residualTransmissionFraction(c,veY,p.r0);const communityRisk=Math.min(0.95,baseRisk*trans);const riskUn=communityRisk; const riskVac=Math.max(0,Math.min(0.95,communityRisk*(1-veY))); const infUn=sUn*riskUn; const infVac=sVac*riskVac; const inf=infUn+infVac; cumInf+=inf; infMen+=inf*p.meningitisRate; sUn-=infUn; sVac-=infVac;} return{cumulativeInfections:cumInf,infectionMeningitis:infMen,vaccineMeningitis:vacMen,totalMeningitis:infMen+vacMen};}
+const verticalLinePlugin={id:'verticalCoverageLine',afterDatasetsDraw(chart){const p=params();const x=chart.scales.x.getPixelForValue(Math.round(p.coverage*100));const y=chart.scales.y;const ctx=chart.ctx;ctx.save();ctx.beginPath();ctx.moveTo(x,y.top);ctx.lineTo(x,y.bottom);ctx.lineWidth=1.5;ctx.setLineDash([5,5]);ctx.strokeStyle='#303640';ctx.stroke();ctx.restore();}};
+let chart;
+function makeChart(){const ctx=$('mainChart');chart=new Chart(ctx,{type:'line',data:{labels:coverageValues,datasets:[{label:'自然感染由来',data:[],tension:.18,pointRadius:0,borderWidth:2},{label:'ワクチン由来',data:[],tension:.18,pointRadius:0,borderWidth:2},{label:'合計',data:[],tension:.18,pointRadius:0,borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{title:items=>`接種率 ${items[0].label}%`,label:item=>`${item.dataset.label}: ${item.parsed.y.toFixed(1)}例 /10万人コホート`}}},scales:{x:{type:'linear',min:0,max:100,title:{display:true,text:'接種率 (%)'},ticks:{stepSize:10,callback:v=>`${v}%`}},y:{title:{display:true,text:'累積無菌性髄膜炎 /10万人コホート'},beginAtZero:true}}},plugins:[verticalLinePlugin]});}
+function fmt1(x){return Number(x).toFixed(1)} function fmt0(x){return Math.round(Number(x)).toLocaleString('ja-JP')}
+function updateText(p){els.coverageVal.textContent=Math.round(p.coverage*100);els.yearsVal.textContent=p.years;els.chartHorizonText.textContent=p.years;els.summaryCoverage.textContent=Math.round(p.coverage*100);els.summaryYears.textContent=p.years;els.infectionRateVal.textContent=p.infectionRate.toLocaleString('ja-JP');els.meningitisRateVal.textContent=(p.meningitisRate*1000).toFixed(1).replace('.0','');els.vaccineMeningitisVal.textContent=p.vaccineMeningitis.toFixed(1).replace('.0','');els.veVal.textContent=Math.round(p.ve*100);els.waningVal.textContent=(p.waning*100).toFixed(1).replace('.0','');els.r0Val.textContent=p.r0.toFixed(1)}
+function update(){const p=params();updateText(p);const infData=[],vacData=[],totData=[];for(const cPct of coverageValues){const r=simulateCohort(cPct/100,p);infData.push({x:cPct,y:r.infectionMeningitis});vacData.push({x:cPct,y:r.vaccineMeningitis});totData.push({x:cPct,y:r.totalMeningitis});}chart.data.datasets[0].data=infData;chart.data.datasets[1].data=vacData;chart.data.datasets[2].data=totData;chart.update('none');const cur=simulateCohort(p.coverage,p);const base=simulateCohort(0,p);const prevented=base.infectionMeningitis-cur.infectionMeningitis;const diff=cur.totalMeningitis-base.totalMeningitis;const br=cur.vaccineMeningitis>0?prevented/cur.vaccineMeningitis:null;els.infMen.textContent=`${fmt1(cur.infectionMeningitis)}例`;els.vacMen.textContent=`${fmt1(cur.vaccineMeningitis)}例`;els.preventedMen.textContent=`${fmt1(prevented)}例`;els.totMen.textContent=`${fmt1(cur.totalMeningitis)}例`;els.diffMen.textContent=`${diff>=0?'+':''}${fmt1(diff)}例`;els.cumInf.textContent=`${fmt0(cur.cumulativeInfections)}人`;els.brRatio.textContent=br===null?'—':`${fmt1(br)} : 1`;els.assumptionLine.textContent=`モデル定義：接種対象年齢の仮想小児コホート10万人を、コホート参加時から${p.years}年間追跡。ワクチン関連無菌性髄膜炎は接種時に1回だけ加算し、自然感染由来リスクは追跡期間中に累積。VE ${Math.round(p.ve*100)}%、年間減衰 ${(p.waning*100).toFixed(1).replace('.0','')}%、接種なし感染率 ${p.infectionRate.toLocaleString('ja-JP')}/10万人年。`; if(prevented>cur.vaccineMeningitis+5){els.interpretation.textContent='現在の設定では、ワクチン由来リスクを上回る感染由来無菌性髄膜炎の予防が推定されます。'}else if(cur.vaccineMeningitis>prevented+5){els.interpretation.textContent='現在の設定では、無菌性髄膜炎だけを見ると、ワクチン由来リスクが予防数を上回る可能性があります。'}else{els.interpretation.textContent='現在の設定では、無菌性髄膜炎だけを見ると、ワクチン由来リスクと予防数は近い水準です。'}}
+function attach(){[els.coverage,els.years,els.infectionRate,els.meningitisRate,els.vaccineMeningitis,els.ve,els.waning,els.r0].forEach(el=>{el.addEventListener('input',update);el.addEventListener('change',update)});document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-preset]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const p=presets[btn.dataset.preset];els.infectionRate.value=p.infectionRate;els.meningitisRate.value=p.meningitisRate;els.vaccineMeningitis.value=p.vaccineMeningitis;els.ve.value=String(p.ve);els.waning.value=p.waning;els.r0.value=p.r0;update()}));}
+window.addEventListener('DOMContentLoaded',()=>{makeChart();attach();update();});
+</script>
+</body></html>

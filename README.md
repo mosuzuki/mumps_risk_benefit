@@ -1,30 +1,5 @@
-# Mumps vaccine benefit-risk dashboard
+# Mumps vaccine risk-benefit model
 
-Static GitHub Pages dashboard for a simple cohort Markov model of mumps vaccination and aseptic meningitis.
+Static GitHub Pages dashboard. This version is a single-file implementation (`index.html`) with embedded CSS and JavaScript to avoid stale `style.css`/`app.js` caching.
 
-## Model definition
-
-- Cohort: hypothetical 100,000 children at vaccination age
-- Vaccination: at cohort entry
-- Follow-up: X years, selected by slider
-- Outcome: cumulative aseptic meningitis per 100,000 cohort
-- Vaccine-associated aseptic meningitis: counted once at cohort entry
-- Infection-associated aseptic meningitis: accumulated during follow-up
-
-## Current summary panel
-
-The top summary panel displays the currently selected scenario:
-
-- Vaccine-associated aseptic meningitis
-- Infection-associated aseptic meningitis
-- Prevented infection-associated aseptic meningitis
-- Total aseptic meningitis
-- Benefit-risk ratio
-
-## Files
-
-- `index.html`
-- `style.css`
-- `app.js`
-
-Upload these files to the root of a GitHub repository and enable GitHub Pages.
+Model: hypothetical cohort of 100,000 children vaccinated at cohort entry and followed for X years. Vaccine-associated aseptic meningitis is counted once at vaccination; infection-associated aseptic meningitis accumulates over follow-up.
